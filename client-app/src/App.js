@@ -3,7 +3,6 @@ import {
     BrowserRouter as Router,
     Routes,
     Route,
-    Link,
 } from "react-router-dom";
 import Home from "./component/Home";
 import Register from "./component/Register";
@@ -12,58 +11,71 @@ import "./App.css";
 import Repository from "./component/Repository";
 import Navbar from "./component/Navbar";
 import CookieConsent from "./component/Cookie";
+import axios from "axios";
 
 class App extends Component {
+    
+    constructor(props) {
+        super(props);
+        this.state = {
+          isLoggedIn: false, // Set initial login status
+          loading: true // Set loading state
+        };
+    }
+    
+    componentDidMount() {
+        this.checkLogin();
+    }
+
+    checkLogin = async () => {
+        try {
+            const isLoggedIn = await this.fetchToken();
+            this.setState({ isLoggedIn, loading: false });
+        } catch (error) {
+            console.error('Error checking login status:', error);
+            this.setState({ loading: false });
+        }
+    };
+
+    handleLogout = async () => {
+        try {
+          await axios.get('http://localhost:9002/api/user/logout');
+          this.setState({ isLoggedIn: false });
+        } catch (error) {
+          console.error('Error logging out:', error);
+        }
+      };
+
+    async fetchToken() {
+        try {
+            const response = await axios.get("http://localhost:9002/api/user/getToken", { credentials: 'cross-origin', withCredentials: true});
+            const token = response.data;
+            console.log("Token received from server:", token);
+            if (token !== 'defaultToken') {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            console.error('Error fetching token:', error);
+            return false;
+        }
+    }
+
     render() {
+        const { isLoggedIn } = this.state;
+
         return (
             <>
             <CookieConsent/>
-            <Navbar/>
+            <Navbar isLoggedIn={isLoggedIn}  handleLogout={this.handleLogout}/>
             <Router>
-            {/*<table align="center">
-            <tr>
-                <td><Link to="/" style={{ color: 'black' }}><b>Home</b></Link></td>
-                <td><Link to="/Register" style={{ color: 'black' }}><b>Register</b></Link></td>
-                <td><Link to="/Login" style={{ color: 'black' }}><b>Login</b></Link></td>
-                <td><Link to="/Repository" style={{ color: 'black' }}><b>Repository</b></Link></td>
-            </tr>
-        </table>*/}   
-              {/* <Link to="/">Home</Link>&nbsp;<Link to="/Register">Register</Link>&nbsp;<Link to="/Login">Login</Link> */}
-                {/* <div className="App">
-                    <ul className="App-header">
-                        <li>
-                            <Link to="/">Home</Link>
-                        </li>
-                        <li>
-                            <Link to="/Register">
-                                Register
-                            </Link>
-                        </li>
-                        <li>
-                            <Link to="/Login">
-                                Login
-                            </Link>
-                        </li>
-                    </ul> */}
-                    <Routes>
-                        <Route
-                            path="/"
-                            element={<Home />}
-                        ></Route>
-                        <Route
-                            path="/Register"
-                            element={<Register />}
-                        ></Route>
-                        <Route
-                            path="/Login"
-                            element={<Login />}
-                        ></Route>
-                        <Route
-                            path="/Repository"
-                            element={<Repository />}
-                        ></Route>
-                    </Routes>
-                {/* </div> */}
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/Register" element={<Register />} />
+                    <Route path="/Login" element={<Login />} />
+                    <Route path="/Repository" element={<Repository />} />
+                </Routes>
             </Router>
             </>
         );

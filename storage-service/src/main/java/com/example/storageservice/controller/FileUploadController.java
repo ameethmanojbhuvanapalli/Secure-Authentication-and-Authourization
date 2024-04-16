@@ -5,7 +5,10 @@ import com.example.storageservice.repository.DigitalFileRepo;
 import com.example.storageservice.service.JwtService;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -106,6 +109,59 @@ public class FileUploadController {
             files = digitalFileRepo.findAll();
         }
         return ResponseEntity.ok(files);
+    }
+
+    @GetMapping("/download/{filename}")
+    public ResponseEntity<FileSystemResource> downloadFile(@PathVariable("filename") String filename) {
+        try {
+            // Retrieve the file path from the database
+            DigitalFile digitalFile = digitalFileRepo.findByFilename(filename);
+            String filePath = digitalFile.getFilepath();
+
+            // Create a FileSystemResource to represent the file
+            FileSystemResource fileResource = new FileSystemResource(filePath);
+
+            // Set up headers for the response
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", filename);
+
+            // Return ResponseEntity with file resource and headers
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(fileResource);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/edit")
+    public ResponseEntity<?> editFile(@CookieValue(value = "token", defaultValue = "defaultToken") String token, @RequestParam("filename") String filename, @RequestBody DigitalFile updatedFile) {
+        Claims claims = jwtService.decodeJwt(token);
+        String userRole = claims.get("role", String.class);
+
+        // Check if user has permission to edit
+        if (!userRole.equalsIgnoreCase("admin_roles")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Permission denied.");
+        }
+
+        try {
+            // Find the file by filename
+            DigitalFile existingFile = digitalFileRepo.findByFilename(filename);
+
+            // Update the file metadata
+            existingFile.setFilename(updatedFile.getFilename());
+            existingFile.setRole(updatedFile.getRole());
+
+            // Save the updated file entity
+            digitalFileRepo.save(existingFile);
+
+            return ResponseEntity.ok("File updated successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
 }

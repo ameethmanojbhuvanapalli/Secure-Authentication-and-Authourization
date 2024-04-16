@@ -124,15 +124,14 @@ public class UserController {
         System.out.println(token);
         return token;
     }
+    @GetMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletResponse response) {
+        setCookie(response,"");
+        return ResponseEntity.ok("Logged out successfully");
+    }
     public String setCookie(HttpServletResponse response, String token) {
         System.out.println(token);
-        Cookie cookie = new Cookie("token", token );
-        //cookie.setSecure(false);
-        //cookie.setMaxAge(7 * 24 * 60 * 60);// Set Secure attribute (if served over HTTPS)
-        //cookie.setHttpOnly(true); // Set HttpOnly attribute
-        //cookie.setPath("/"); // Set Path attribute to root path
         response.setHeader("Set-Cookie", "token=" + token + "; Path=/; HttpOnly");
-        //response.addCookie(cookie);
         return "Cookie set successfully!";
     }
 

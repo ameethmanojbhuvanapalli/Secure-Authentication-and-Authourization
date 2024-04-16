@@ -12,7 +12,7 @@ export default class Home extends PureComponent {
               <div>
                 <h1 className="display-4 mb-4">Welcome</h1>
                 <h3 className="mb-4">Empowering you with secure digital access.</h3>
-                <a href="/login" className="btn btn-primary btn-lg">Get Started</a>
+                <a href="/login" className="btn btn-dark btn-lg">Get Started</a>
               </div>
             </div>
             <div className="col-md-6">

@@ -1,9 +1,6 @@
 import React from "react";
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
-
 
 function Login() {
   const [usermsg, setUsermsg] = useState("");  // filled from response
@@ -27,7 +24,7 @@ function Login() {
       iotp = totp;
     }
     try {
-      const res = await axios.post("http://localhost:9000/api/user/login", {
+      const res = await axios.post("http://localhost:9002/api/user/login", {
         email: email,
         password: password,
         otp: iotp,
@@ -38,7 +35,6 @@ function Login() {
         setUsermsg(res.data.token);
         setLoginDisabled(true);
         setSendOtpDisabled(true);
-        fetchToken();
       }
       if (res.data.otpOption === "1") {
         setUsermsg("Please enter Time-based One Time Password generated in Authenticator App.");
@@ -55,15 +51,6 @@ function Login() {
       setLoginDisabled(false);
     }
   } 
-  async function fetchToken() {
-    try {
-        const response = await axios.get("http://localhost:9000/api/user/getToken", { credentials: 'cross-origin', withCredentials: true});
-        const token = response.data;
-        console.log("Token received from server:", token);
-    } catch (error) {
-        console.error('Error fetching token:', error);
-    }
-}
   return (
     <div className="container">
         <div className="row">

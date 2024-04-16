@@ -46,7 +46,7 @@ function Register() {
   async function handleSubmit(event) {
     event.preventDefault();
     try {
-      const res = await axios.post("http://localhost:9000/api/user", {
+      const res = await axios.post("http://localhost:9002/api/user", {
         name: name,
         email: email,
         password: password,
@@ -72,7 +72,7 @@ function Register() {
       setMfaflag("");
       setUserRole("");
       alert(res.data.username + " is sucessfully added.")
-      navigate('/Login');
+      //navigate('/Login');
     } catch (err) {
       alert(err);
       console.log(err);
@@ -83,7 +83,7 @@ function Register() {
     event.preventDefault();
     var code = totp;
     try {
-      const res = await axios.post("http://localhost:9000/api/user/validatecode", {
+      const res = await axios.post("http://localhost:9002/api/user/validatecode", {
         email: email2,
         code: code
       });

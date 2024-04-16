@@ -7,9 +7,12 @@ function Repository() {
   const [fname, setFname] = useState("");
   const [file, setFile] = useState();
   const [data, setData] = useState([]);
+  const [editFilename, setEditFilename] = useState("");
+  const [editRole, setEditRole] = useState("");
+  const [editIndex, setEditIndex] = useState(null);
 
   useEffect(() => {
-    axios.get("http://localhost:9001/api/file/list")
+    axios.get("http://localhost:9002/api/file/list")
       .then((response) => {
         setData(response.data);
       })
@@ -30,9 +33,40 @@ function Repository() {
     setUserRole(event.target.value);
   }
 
+  const handleEdit = (index) => {
+    const fileToEdit = data[index];
+    setEditFilename(fileToEdit.filename);
+    setEditRole(fileToEdit.role);
+    setEditIndex(index);
+  }
+
+  const handleEditSubmit = async () => {
+    try {
+      const updatedFile = {
+        filename: editFilename,
+        role: editRole
+      };
+      const response = await axios.post("http://localhost:9002/api/file/edit", updatedFile, {
+        params: { filename: data[editIndex].filename },
+        withCredentials: true
+      });
+      setUsermsg(response.data);
+      // Update the file data in the state
+      const newData = [...data];
+      newData[editIndex] = { ...newData[editIndex], filename: editFilename, role: editRole };
+      setData(newData);
+      // Reset edit state
+      setEditFilename("");
+      setEditRole("");
+      setEditIndex(null);
+    } catch (error) {
+      setUsermsg("Failed to edit file");
+    }
+  }
+
   const handleDelete = async (filename) => {
     try {
-      const response = await axios.post("http://localhost:9001/api/file/delete", null, {
+      const response = await axios.post("http://localhost:9002/api/file/delete", null, {
         params: { filename },
         withCredentials: true
       });
@@ -43,9 +77,10 @@ function Repository() {
       setUsermsg("Failed to delete file from Repository");
     }
   }
-  
-  
-  
+
+  const handleDownload = async (filename) => {
+    // Download logic
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -54,7 +89,7 @@ function Repository() {
       formData.append('file', file);
       formData.append('filename', fname);
       formData.append('role', userRole);
-      const res = await axios.post("http://localhost:9001/api/file/upload", formData, { withCredentials: true });
+      const res = await axios.post("http://localhost:9002/api/file/upload", formData, { withCredentials: true });
       setUsermsg(res.data);
     } catch (err) {
       console.log(err)
@@ -76,7 +111,7 @@ function Repository() {
               <tr>
                 <th scope="col">File Name</th>
                 <th scope="col">Role</th>
-                <th scope="col" colSpan="3">Action</th>
+                <th scope="col" colSpan="4">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -85,16 +120,32 @@ function Repository() {
                   <td><a href={dataObj.filepath}>{dataObj.filename}</a></td>
                   <td>{dataObj.role}</td>
                   <td>
-                    <button type="button" className="btn btn-primary">Download</button>
+                    <button type="button" className="btn btn-primary" onClick={() => handleDownload(dataObj.filename)}>Download</button>
                   </td>
                   <td>
-                    <button type="button" className="btn btn-primary">Edit</button>
+                    <button type="button" className="btn btn-warning" onClick={() => handleEdit(index)}>Edit</button>
                   </td>
                   <td>
                     <button type="button" className="btn btn-danger" onClick={() => handleDelete(dataObj.filename)}>Delete</button>
                   </td>
                 </tr>
               ))}
+              {editIndex !== null && (
+                <tr>
+                  <td>
+                    <input type="text" value={editFilename} onChange={(e) => setEditFilename(e.target.value)} className="form-control" />
+                  </td>
+                  <td>
+                    <select value={editRole} onChange={(e) => setEditRole(e.target.value)} className="form-control">
+                      <option value="ADMIN_ROLES">Admin</option>
+                      <option value="USER_ROLES">User</option>
+                    </select>
+                  </td>
+                  <td colSpan="2">
+                    <button type="button" className="btn btn-success" onClick={handleEditSubmit}>Save</button>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
